@@ -82,13 +82,13 @@ function setCalendarAppts() {
           // TODO - change color to draw attention to overdue tasks?
         }
 
-        // WIP - update time if time is set in due date
+        // WIP - update time if time is set in due date      
+        var eventSheetDate = data[i][dateColumnId];
+        var eventTimeHour = Utilities.formatDate(eventSheetDate, CONFIG_TIMEZONE, 'HH');
+        var eventTimeMinute = Utilities.formatDate(eventSheetDate, CONFIG_TIMEZONE, 'mm');
+        
         eventDate = event.getStartTime();
-        var eventTimeHour = Utilities.formatDate(eventDate, CONFIG_TIMEZONE, 'HH');
-        var eventTimeMinute = Utilities.formatDate(eventDate, CONFIG_TIMEZONE, 'mm');
-
         if (eventTimeHour + ":" + eventTimeMinute != "00:00") {
-
           eventDate.setHours(eventTimeHour);
           eventDate.setMinutes(eventTimeMinute);
           event.setTime(eventDate, eventDate); // set correct time here

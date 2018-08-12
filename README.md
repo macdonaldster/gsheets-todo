@@ -16,3 +16,7 @@ Some tips:
 - I haven't tested this extensively so if you find problems please report them
 - if you are doing some dev on this, you can delete the Google calendar ID from your sheet to make it re-add the event. I also tend to delete the event itself so you don't have a bunch of duplicates lying around but you don't have to
 - once the event is created you can do whatever you want to it in Google Calendar... the event ID will make sure it gets auto-advanced but won't break any other entries (just date and time of day) - so add notes, locations, change the title, etc...
+
+Possible improvements:
+- recurring events are easy, just don't mark them as done but this won't help you re: "every week" type stuff - might add something like an auto-advance syntax like Emacs Org Mode Repeating Tasks (https://orgmode.org/manual/Repeated-tasks.html).
+- if something is overdue flag it with a different color (or just use the color of the date cell, that way conditional highlighting can be used and you can do whatever you want with it)

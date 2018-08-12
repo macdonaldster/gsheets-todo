@@ -76,16 +76,23 @@ function setCalendarAppts() {
         // fetch the event using the ID
         event = CalendarApp.getDefaultCalendar().getEventById(data[i][googleCalColumnId]);
 
-        // auto-advance to today in CALENDAR (not sheet)
-        if (event.getStartTime() < new Date()) {
-          event.setAllDayDate(new Date());
-          // TODO - change color to draw attention to overdue tasks?
-        }
-
-        // WIP - update time if time is set in due date      
+        //  update time if time is set in due date      
         var eventSheetDate = data[i][dateColumnId];
         var eventTimeHour = Utilities.formatDate(eventSheetDate, CONFIG_TIMEZONE, 'HH');
         var eventTimeMinute = Utilities.formatDate(eventSheetDate, CONFIG_TIMEZONE, 'mm');
+        
+        // auto-advance to today in CALENDAR (not sheet)
+        if (eventSheetDate < new Date()) {
+          event.setAllDayDate(new Date());
+          // TODO - change color to draw attention to overdue tasks?
+        }
+        else
+        {
+          // update calendar date to revised sheet date
+          event.setAllDayDate(eventSheetDate);
+        }
+
+       
         
         eventDate = event.getStartTime();
         if (eventTimeHour + ":" + eventTimeMinute != "00:00") {

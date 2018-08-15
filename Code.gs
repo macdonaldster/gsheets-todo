@@ -15,11 +15,11 @@ var CONFIG_COLUMNS_TASK = 'Task';
 var CONFIG_COLUMNS_DUEDATE = 'Due Date';
 var CONFIG_COLUMNS_GOOGLECALENDARID = 'GoogleCalendarId';
 var CONFIG_TIMEZONE = 'GMT-0600';
+var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not change color, set to NULL - See https://developers.google.com/apps-script/reference/calendar/event-color
+//var CONFIG_GCAL_OVERDUE_COLOUR = null; // WILL NOT CHANGE COLOUR
 
 
-
-
-/// setCalendaryAppts()
+/// setCalendarAppts()
 ///  - for each entry in your sheet that is not "done"
 ///  - if it has a due date, add it to the calendar
 ///  - add the calendar event ID to the sheet (can be in hidden column)
@@ -39,6 +39,10 @@ function setCalendarAppts() {
   // find events with dates
   for (var i = 1; i < data.length; i++) {
 
+      // for each date cell, get background color and use it to set color in calendar
+      var calendarColor = sheet.getRange(i+1,dateColumnId+1).getBackground();
+      
+
     // if date but not google calendar entry, add it
     if (!data[i][isCompleteColumnId]) {
       var event;
@@ -51,13 +55,20 @@ function setCalendarAppts() {
         var eventTimeMinute = Utilities.formatDate(eventDate, CONFIG_TIMEZONE, 'mm');
 
         // always add "today" if less than today
+        var isOverdue = false;
         if (eventDate.getDate() < new Date().getDate()) {
           eventDate.setDate(new Date().getDate());
+          isOverdue = true;
         }
 
         // create event
         event = CalendarApp.getDefaultCalendar().createAllDayEvent(data[i][taskColumnId], eventDate);
-
+        
+        // if event is overdue
+        if (isOverdue && CONFIG_GCAL_OVERDUE_COLOUR != null) {
+          event.setColor(CONFIG_GCAL_OVERDUE_COLOUR);
+        }
+        
         // WIP - set time if time exists in entry
         if (eventTimeHour + ":" + eventTimeMinute != "00:00") {
           eventDate.setHours(eventTimeHour);
@@ -84,7 +95,12 @@ function setCalendarAppts() {
         // auto-advance to today in CALENDAR (not sheet)
         if (eventSheetDate < new Date()) {
           event.setAllDayDate(new Date());
-          // TODO - change color to draw attention to overdue tasks?
+          
+          // change color if event is overdue
+          if (CONFIG_GCAL_OVERDUE_COLOUR != null) {
+            event.setColor(CONFIG_GCAL_OVERDUE_COLOUR);
+          }
+
         }
         else
         {
@@ -93,7 +109,6 @@ function setCalendarAppts() {
         }
 
        
-        
         eventDate = event.getStartTime();
         if (eventTimeHour + ":" + eventTimeMinute != "00:00") {
           eventDate.setHours(eventTimeHour);

@@ -3,10 +3,13 @@
    This file has some functions you can schedule to do various things with your TODO items...
    Please see comments inline, below 
    
-   NOTE: this is designed to be run AFTER MIDNIGHT in YOUR timezone... this will move all overdue
+   NOTE: this is designed to be run using YOUR timezone... this will move all overdue
          entries to the current day as calendar enties and leave the original dates in the sheet 
-         unchanged...
-   
+         unchanged... You can run this as often as you want each day (e.g. to keep things up to date).
+         
+         It should be noted you can easily use this to quick-add calendar entries. I have an Automate script 
+         on my phone that appends a row to the sheet or you can use IFTTT, etc. There are many, many 
+         ways to append a row to a Google Sheet, find the one that works best for you.   
 */
 
 /// CONFIG 

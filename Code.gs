@@ -3,10 +3,16 @@
    This file has some functions you can schedule to do various things with your TODO items...
    Please see comments inline, below 
    
-   NOTE: this is designed to be run AFTER MIDNIGHT in YOUR timezone... this will move all overdue
+   NOTE: this is designed to be run using YOUR timezone... this will move all overdue
          entries to the current day as calendar enties and leave the original dates in the sheet 
-         unchanged...
-   
+         unchanged... You can run this as often as you want each day (e.g. to keep things up to date).
+         
+         It should be noted you can easily use this to quick-add calendar entries. I have an Automate script 
+         on my phone that appends a row to the sheet or you can use IFTTT, etc. There are many, many 
+         ways to append a row to a Google Sheet, find the one that works best for you.   
+         
+         To add an ID column that autoincrements bind the setAutoIncrementIDs() function to the 
+         change event in your sheet using a trigger.
 */
 
 /// CONFIG 
@@ -14,9 +20,13 @@ var CONFIG_COLUMNS_DONE = 'Done?';
 var CONFIG_COLUMNS_TASK = 'Task';
 var CONFIG_COLUMNS_DUEDATE = 'Due Date';
 var CONFIG_COLUMNS_GOOGLECALENDARID = 'GoogleCalendarId';
+var CONFIG_COLUMNS_AUTOINCREMENT = 'ID';
 var CONFIG_TIMEZONE = 'GMT-0600';
 var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not change color, set to NULL - See https://developers.google.com/apps-script/reference/calendar/event-color
 //var CONFIG_GCAL_OVERDUE_COLOUR = null; // WILL NOT CHANGE COLOUR
+
+// SHEET NAMES
+var CONFIG_SHEET_TODO = 'TODO'; // you can set this to some test sheet for debugging the set up and script options, etc.
 
 
 /// setCalendarAppts()
@@ -28,7 +38,7 @@ var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not chan
 ///  - WIP - allow use of time of day in the entries
 function setCalendarAppts() {
 
-  var sheet = SpreadsheetApp.getActiveSheet();
+  var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
   var data = sheet.getDataRange().getValues();
 
   var isCompleteColumnId = data[0].indexOf(CONFIG_COLUMNS_DONE);
@@ -39,9 +49,6 @@ function setCalendarAppts() {
   // find events with dates
   for (var i = 1; i < data.length; i++) {
 
-      // for each date cell, get background color and use it to set color in calendar
-      var calendarColor = sheet.getRange(i+1,dateColumnId+1).getBackground();
-      
 
     // if date but not google calendar entry, add it
     if (!data[i][isCompleteColumnId]) {
@@ -62,7 +69,7 @@ function setCalendarAppts() {
         }
 
         // create event
-        event = CalendarApp.getDefaultCalendar().createAllDayEvent(data[i][taskColumnId], eventDate);
+        event = CalendarApp.getDefaultCalendar().createAllDayEvent(data[i][taskColumnId] + " #mute", eventDate);
         
         // if event is overdue
         if (isOverdue && CONFIG_GCAL_OVERDUE_COLOUR != null) {
@@ -126,4 +133,31 @@ function setCalendarAppts() {
 
 }
 
+/*
+Code based on/copied from https://blog.cloudstitch.com/auto-incrementing-id-columns-in-google-sheets-d9b31b2cc060
+-- Auto-incrementing ID Columns in Google Sheets
+*/
+function setAutoIncrementIDs() {
 
+  
+  var HEADER_ROW_COUNT = 1;
+  
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+  var rows        = worksheet.getDataRange().getNumRows();
+  var vals        = worksheet.getSheetValues(1, 1, rows+1, 2);
+  var autoIncColumnId = vals[0].indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
+  
+  for (var row = HEADER_ROW_COUNT; row < vals.length - 1; row++) {
+    try {
+      var id = vals[row][autoIncColumnId];
+      Logger.log(id);Logger.log((""+id).length ===0);
+      if ((""+id).length === 0) {
+        // Here the columns & rows are 1-indexed
+        worksheet.getRange(row+1, autoIncColumnId+1).setValue(row);
+      }
+    } catch(ex) {
+      // Keep calm and carry on
+    }
+  }
+}

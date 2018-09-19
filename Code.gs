@@ -26,7 +26,6 @@ var CONFIG_COLUMNS_GOOGLECALENDARID = 'GoogleCalendarId';
 var CONFIG_COLUMNS_AUTOINCREMENT = 'ID';
 var CONFIG_COLUMNS_LASTMODIFIED = 'Last Modified';
 
-
 ///// OPTIONS
 var CONFIG_TIMEZONE = 'GMT-0600';
 var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not change color, set to NULL - See https://developers.google.com/apps-script/reference/calendar/event-color

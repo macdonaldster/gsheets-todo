@@ -16,11 +16,17 @@
 */
 
 /// CONFIG 
+
+///// COLUMNS
 var CONFIG_COLUMNS_DONE = 'Done?';
 var CONFIG_COLUMNS_TASK = 'Task';
+var CONFIG_COLUMNS_PROJECT = 'Project';
 var CONFIG_COLUMNS_DUEDATE = 'Due Date';
 var CONFIG_COLUMNS_GOOGLECALENDARID = 'GoogleCalendarId';
 var CONFIG_COLUMNS_AUTOINCREMENT = 'ID';
+var CONFIG_COLUMNS_LASTMODIFIED = 'Last Modified';
+
+///// OPTIONS
 var CONFIG_TIMEZONE = 'GMT-0600';
 var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not change color, set to NULL - See https://developers.google.com/apps-script/reference/calendar/event-color
 //var CONFIG_GCAL_OVERDUE_COLOUR = null; // WILL NOT CHANGE COLOUR
@@ -41,10 +47,11 @@ function setCalendarAppts() {
   var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
   var data = sheet.getDataRange().getValues();
 
-  var isCompleteColumnId = data[0].indexOf(CONFIG_COLUMNS_DONE);
-  var taskColumnId = data[0].indexOf(CONFIG_COLUMNS_TASK);
-  var dateColumnId = data[0].indexOf(CONFIG_COLUMNS_DUEDATE);
-  var googleCalColumnId = data[0].indexOf(CONFIG_COLUMNS_GOOGLECALENDARID); 
+  var columnHeaders = getColumnHeaders();
+  var isCompleteColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_DONE);
+  var taskColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_TASK);
+  var dateColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_DUEDATE);
+  var googleCalColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_GOOGLECALENDARID); 
 
   // find events with dates
   for (var i = 1; i < data.length; i++) {
@@ -115,7 +122,8 @@ function setCalendarAppts() {
           event.setAllDayDate(eventSheetDate);
         }
 
-       
+        // update title
+          event.setTitle(data[i][taskColumnId]);
         eventDate = event.getStartTime();
         if (eventTimeHour + ":" + eventTimeMinute != "00:00") {
           eventDate.setHours(eventTimeHour);
@@ -133,31 +141,80 @@ function setCalendarAppts() {
 
 }
 
-/*
-Code based on/copied from https://blog.cloudstitch.com/auto-incrementing-id-columns-in-google-sheets-d9b31b2cc060
--- Auto-incrementing ID Columns in Google Sheets
-*/
-function setAutoIncrementIDs() {
+/* get column headers in an array */
+function getColumnHeaders(){
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);    
+    var columns = worksheet.getDataRange().getNumColumns();
+    return worksheet.getSheetValues(1, 1, 1, columns)[0];    
+}
 
-  
-  var HEADER_ROW_COUNT = 1;
-  
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
-  var rows        = worksheet.getDataRange().getNumRows();
-  var vals        = worksheet.getSheetValues(1, 1, rows+1, 2);
-  var autoIncColumnId = vals[0].indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
-  
-  for (var row = HEADER_ROW_COUNT; row < vals.length - 1; row++) {
-    try {
-      var id = vals[row][autoIncColumnId];
-      Logger.log(id);Logger.log((""+id).length ===0);
-      if ((""+id).length === 0) {
-        // Here the columns & rows are 1-indexed
-        worksheet.getRange(row+1, autoIncColumnId+1).setValue(row);
-      }
-    } catch(ex) {
-      // Keep calm and carry on
+
+
+/* on Edit:
+   - ensure there's an ID on the row if ID column is defined   
+   - update last modified date if column is defined
+*/
+function onEdit(e){
+
+    //Access the range with your parameter e.
+    var range = e.range;
+    var row = range.getRow();
+    var columnHeaders = getColumnHeaders();
+    var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
+    var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
+
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+
+    // auto-increment ID
+    if(autoIncColumnId > -1 && worksheet.getRange(row, autoIncColumnId+1).getValue() == '' ){
+     worksheet.getRange(row, autoIncColumnId+1).setValue(Utilities.getUuid()); 
+    }
+
+    // last modified
+    if( lastModifiedColumnId > -1 ){
+      worksheet.getRange(row, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
+    }
+    
+}
+
+
+
+/* WIP */
+function setHabitEntry(){
+  var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+  var data = sheet.getDataRange().getValues();
+
+  var columnHeaders = getColumnHeaders();
+  var taskColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_TASK);
+  var projectColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_PROJECT);
+
+  // find events with dates
+  var habitTasks = [];
+  for (var i = 1; i < data.length; i++) {
+    if( data[i][projectColumnId] == "Habit" )
+    {
+      habitTasks.push(data[i][taskColumnId]);      
     }
   }
+  
+  var rndIndex = Math.floor((Math.random() * habitTasks.length));
+  
+  Logger.log('Habit: ' + habitTasks[rndIndex]);
+  
+  
+  // make new event
+       
+  // create event
+  var dtm = new Date();
+  Logger.log('Habit dtm: ' + new Date(dtm.getFullYear(), Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'MM') - 1, Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'dd'), 14, 30));
+  var event = CalendarApp.getDefaultCalendar().createEvent('HABIT: ' + habitTasks[rndIndex]
+                  , new Date(dtm.getFullYear(), Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'MM') - 1 , Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'dd'), 14, 30)
+                  , new Date(dtm.getFullYear(), Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'MM') - 1, Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'dd'), 15, 00));
+
+  Logger.log('Event: ' + event.getId());
+
 }
+
+

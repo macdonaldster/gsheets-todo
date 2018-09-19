@@ -11,8 +11,6 @@
          on my phone that appends a row to the sheet or you can use IFTTT, etc. There are many, many 
          ways to append a row to a Google Sheet, find the one that works best for you.   
          
-         To add an ID column that autoincrements bind the setAutoIncrementIDs() function to the 
-         change event in your sheet using a trigger.
 */
 
 /// CONFIG 

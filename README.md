@@ -19,3 +19,8 @@ Some tips:
 Possible improvements:
 - recurring events are easy, just don't mark them as done but this won't help you re: "every week" type stuff - might add something like an auto-advance syntax like Emacs Org Mode Repeating Tasks (https://orgmode.org/manual/Repeated-tasks.html).
 - see issues list for the rest, please add your own?
+
+# NOTES
+1. Here is how to set up the current project triggers ("setHabitEntry" is optional!):
+
+![image](https://user-images.githubusercontent.com/8730468/45856443-c27f0c80-bd11-11e8-836d-887b9c2e0d6f.png)

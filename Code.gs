@@ -181,7 +181,7 @@ function onEdit(e){
 }
 
 
-/* onEdit(e) isn't firing on IFTTT adds, etc. so you need to scan and periodically fill in missing values */
+/* onEdit(e) isn't firing on IFTTT adds, etc. so you need to scan and periodically fill in missing values - USE A TIME TRIGGER "Edit -> Current Project's Triggers" */
 function fillInMissingIDs(){
 
    Logger.log("fillInMissingIDs");
@@ -216,6 +216,8 @@ function fillInMissingIDs(){
 
 
 /* WIP */
+/* Set a time trigger for this one to get a random task from a project (add a "Project" column) called "Habit" 
+   It will add it at 2:30pm on the current day so run it after midnight or whatever you like */
 function setHabitEntry(){
   var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
   var data = sheet.getDataRange().getValues();

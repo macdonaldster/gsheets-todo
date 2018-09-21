@@ -26,7 +26,7 @@ Possible improvements:
 ![image](https://user-images.githubusercontent.com/8730468/45856443-c27f0c80-bd11-11e8-836d-887b9c2e0d6f.png)
 ---
 
-2. Here is the worksheet name and column names I use (configured in the Code.gs file if you don't like my names). You don't need all these columns, just the ones you feel like using.
+2. Here is the worksheet name and column names I use (configured in the Code.gs file if you don't like my names). You don't need all these columns, just the ones you feel like using. Due date entries are any date format, just add a date and it will make a calendar entry (you need to set up the triggers).
 ---
 ![image](https://user-images.githubusercontent.com/8730468/45857015-1c80d180-bd14-11e8-92d2-8d44989b9a77.png)
 

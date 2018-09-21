@@ -28,5 +28,6 @@ Possible improvements:
 
 2. Here is the worksheet name and column names I use (configured in the Code.gs file if you don't like my names). You don't need all these columns, just the ones you feel like using.
 ---
-![image](https://user-images.githubusercontent.com/8730468/45856938-cca20a80-bd13-11e8-9ec8-c89767032bbb.png)
+![image](https://user-images.githubusercontent.com/8730468/45857015-1c80d180-bd14-11e8-92d2-8d44989b9a77.png)
+
 ---

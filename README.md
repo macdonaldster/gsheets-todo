@@ -22,5 +22,11 @@ Possible improvements:
 
 # NOTES
 1. Here is how to set up the current project triggers ("setHabitEntry" is optional!):
-
+---
 ![image](https://user-images.githubusercontent.com/8730468/45856443-c27f0c80-bd11-11e8-836d-887b9c2e0d6f.png)
+---
+
+2. Here is the worksheet name and column names I use (configured in the Code.gs file if you don't like my names). You don't need all these columns, just the ones you feel like using.
+---
+![image](https://user-images.githubusercontent.com/8730468/45856938-cca20a80-bd13-11e8-9ec8-c89767032bbb.png)
+---

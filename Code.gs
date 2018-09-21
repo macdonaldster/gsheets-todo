@@ -11,8 +11,6 @@
          on my phone that appends a row to the sheet or you can use IFTTT, etc. There are many, many 
          ways to append a row to a Google Sheet, find the one that works best for you.   
          
-         To add an ID column that autoincrements bind the setAutoIncrementIDs() function to the 
-         change event in your sheet using a trigger.
 */
 
 /// CONFIG 
@@ -157,6 +155,8 @@ function getColumnHeaders(){
 */
 function onEdit(e){
 
+   Logger.log("onEdit");
+
     //Access the range with your parameter e.
     var range = e.range;
     var row = range.getRow();
@@ -168,16 +168,50 @@ function onEdit(e){
     var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
 
     // auto-increment ID
-    if(autoIncColumnId > -1 && worksheet.getRange(row, autoIncColumnId+1).getValue() == '' ){
+    Logger.log("val: " + row );
+    if(row > 1 && autoIncColumnId > -1 && worksheet.getRange(row, autoIncColumnId+1).getValue() == '' ){
      worksheet.getRange(row, autoIncColumnId+1).setValue(Utilities.getUuid()); 
     }
 
     // last modified
-    if( lastModifiedColumnId > -1 ){
+    if( row > 1 && lastModifiedColumnId > -1 ){
       worksheet.getRange(row, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
     }
     
 }
+
+
+/* onEdit(e) isn't firing on IFTTT adds, etc. so you need to scan and periodically fill in missing values */
+function fillInMissingIDs(){
+
+   Logger.log("fillInMissingIDs");
+
+    var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+    var data = sheet.getDataRange().getValues();
+    var columnHeaders = getColumnHeaders();
+    var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
+    var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
+  
+    Logger.log("data.length: " + data.length );
+    for (var i = 1; i < data.length; i++) {
+
+      Logger.log("i: " + i );
+      Logger.log("data[i][autoIncColumnId]: " + data[i][autoIncColumnId] );
+      Logger.log("data[i][lastModifiedColumnId]: " + data[i][lastModifiedColumnId] );
+      // if date but not google calendar entry, add it
+      if (data[i][autoIncColumnId] == '') {
+        sheet.getRange(i + 1, autoIncColumnId+1).setValue(Utilities.getUuid()); 
+      }
+      
+      if (data[i][lastModifiedColumnId] == '') {
+        sheet.getRange(i + 1, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
+      }
+
+    }
+   
+}
+
+
 
 
 

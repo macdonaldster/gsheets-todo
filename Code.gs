@@ -164,17 +164,30 @@ function setCalendarAppts() {
 
 }
 
-
-/* HIDE any row that has a Hide Until column entry with a date after current date */
-function setHideUntilRowVisibility(){
-
-  var data = getCalendarData();
-
-  // column headers 
-  var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
-
+/* HIDE a single row if it has a Hide Until column entry with a date after current date */
+function setHideUntilRowVisibility( rowID, hideUntilVal){
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
   
-
+      // check if date is > now
+      var dtmHideUntil = new Date(hideUntilVal);
+      var dtmNow = new Date();
+      
+      var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+      
+      Logger.log("rowID: " + rowID );
+      
+      if( dtmNow <= dtmHideUntil ){
+        // hide the row
+        worksheet.hideRows(rowID);        
+      }
+      else{
+        // show the row
+        worksheet.showRows(rowID);
+      }
+  
+      
 }
 
 
@@ -192,6 +205,7 @@ function onEdit(e){
     var columnHeaders = getColumnHeaders();
     var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
     var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
+    var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
 
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
@@ -207,6 +221,11 @@ function onEdit(e){
       worksheet.getRange(row, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
     }
     
+    // hide until
+    if( row > 1 && hideUntilColumnId > -1 && worksheet.getRange(row, hideUntilColumnId+1).getValue() != '' ){
+      setHideUntilRowVisibility(row, worksheet.getRange(row, hideUntilColumnId+1).getValue() ); 
+    }
+  
 }
 
 
@@ -220,6 +239,7 @@ function fillInMissingIDs(){
     // columns
     var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
     var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
+    var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
   
     for (var i = 1; i < data.length; i++) {
 
@@ -231,6 +251,12 @@ function fillInMissingIDs(){
       if (data[i][lastModifiedColumnId] == '') {
         sheet.getRange(i + 1, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
       }
+      
+      // hide until
+      if (data[i][hideUntilColumnId] != '') { 
+        setHideUntilRowVisibility(i+1, data[i][hideUntilColumnId] ); 
+      }
+
     }  
 }
 

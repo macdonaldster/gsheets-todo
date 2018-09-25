@@ -23,6 +23,7 @@ var CONFIG_COLUMNS_DUEDATE = 'Due Date';
 var CONFIG_COLUMNS_GOOGLECALENDARID = 'GoogleCalendarId';
 var CONFIG_COLUMNS_AUTOINCREMENT = 'ID';
 var CONFIG_COLUMNS_LASTMODIFIED = 'Last Modified';
+var CONFIG_COLUMNS_HIDEROWUNTILDATE = 'Hide Until';
 
 ///// OPTIONS
 var CONFIG_TIMEZONE = 'GMT-0600';
@@ -31,6 +32,31 @@ var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not chan
 
 // SHEET NAMES
 var CONFIG_SHEET_TODO = 'TODO'; // you can set this to some test sheet for debugging the set up and script options, etc.
+
+// globals
+var columnHeaders = getColumnHeaders();
+
+
+/* --- UTILITY FUNCTIONS START --- */
+
+/* get column headers in an array */
+function getColumnHeaders(){
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);    
+    var columns = worksheet.getDataRange().getNumColumns();
+    return worksheet.getSheetValues(1, 1, 1, columns)[0];    
+}
+
+/* get calendar data as set of rows you can iterate over */
+function getCalendarData(){
+  var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+  var data = sheet.getDataRange().getValues();
+  return data;
+}
+
+/* --- UTILITY FUNCTIONS END   --- */
+
+
 
 
 /// setCalendarAppts()
@@ -42,10 +68,9 @@ var CONFIG_SHEET_TODO = 'TODO'; // you can set this to some test sheet for debug
 ///  - WIP - allow use of time of day in the entries
 function setCalendarAppts() {
 
-  var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
-  var data = sheet.getDataRange().getValues();
+  var data = getCalendarData();
 
-  var columnHeaders = getColumnHeaders();
+  // column headers 
   var isCompleteColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_DONE);
   var taskColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_TASK);
   var dateColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_DUEDATE);
@@ -139,14 +164,31 @@ function setCalendarAppts() {
 
 }
 
-/* get column headers in an array */
-function getColumnHeaders(){
-    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);    
-    var columns = worksheet.getDataRange().getNumColumns();
-    return worksheet.getSheetValues(1, 1, 1, columns)[0];    
+/* HIDE a single row if it has a Hide Until column entry with a date after current date */
+function setHideUntilRowVisibility( rowID, hideUntilVal){
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+  
+      // check if date is > now
+      var dtmHideUntil = new Date(hideUntilVal);
+      var dtmNow = new Date();
+      
+      var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+      
+      Logger.log("rowID: " + rowID );
+      
+      if( dtmNow <= dtmHideUntil ){
+        // hide the row
+        worksheet.hideRows(rowID);        
+      }
+      else{
+        // show the row
+        worksheet.showRows(rowID);
+      }
+  
+      
 }
-
 
 
 /* on Edit:
@@ -163,6 +205,7 @@ function onEdit(e){
     var columnHeaders = getColumnHeaders();
     var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
     var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
+    var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
 
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
@@ -178,26 +221,28 @@ function onEdit(e){
       worksheet.getRange(row, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
     }
     
+    // hide until
+    if( row > 1 && hideUntilColumnId > -1 && worksheet.getRange(row, hideUntilColumnId+1).getValue() != '' ){
+      setHideUntilRowVisibility(row, worksheet.getRange(row, hideUntilColumnId+1).getValue() ); 
+    }
+  
 }
+
+
 
 
 /* onEdit(e) isn't firing on IFTTT adds, etc. so you need to scan and periodically fill in missing values */
 function fillInMissingIDs(){
 
-   Logger.log("fillInMissingIDs");
-
-    var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
-    var data = sheet.getDataRange().getValues();
-    var columnHeaders = getColumnHeaders();
+    var data = getCalendarData();
+    
+    // columns
     var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
     var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
+    var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
   
-    Logger.log("data.length: " + data.length );
     for (var i = 1; i < data.length; i++) {
 
-      Logger.log("i: " + i );
-      Logger.log("data[i][autoIncColumnId]: " + data[i][autoIncColumnId] );
-      Logger.log("data[i][lastModifiedColumnId]: " + data[i][lastModifiedColumnId] );
       // if date but not google calendar entry, add it
       if (data[i][autoIncColumnId] == '') {
         sheet.getRange(i + 1, autoIncColumnId+1).setValue(Utilities.getUuid()); 
@@ -206,9 +251,13 @@ function fillInMissingIDs(){
       if (data[i][lastModifiedColumnId] == '') {
         sheet.getRange(i + 1, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
       }
+      
+      // hide until
+      if (data[i][hideUntilColumnId] != '') { 
+        setHideUntilRowVisibility(i+1, data[i][hideUntilColumnId] ); 
+      }
 
-    }
-   
+    }  
 }
 
 
@@ -217,10 +266,10 @@ function fillInMissingIDs(){
 
 /* WIP */
 function setHabitEntry(){
-  var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
-  var data = sheet.getDataRange().getValues();
+  
+  var data = getCalendarData();
 
-  var columnHeaders = getColumnHeaders();
+  // columns
   var taskColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_TASK);
   var projectColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_PROJECT);
 
@@ -233,21 +282,14 @@ function setHabitEntry(){
     }
   }
   
+  // select random event index
   var rndIndex = Math.floor((Math.random() * habitTasks.length));
   
-  Logger.log('Habit: ' + habitTasks[rndIndex]);
-  
-  
-  // make new event
-       
   // create event
   var dtm = new Date();
-  Logger.log('Habit dtm: ' + new Date(dtm.getFullYear(), Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'MM') - 1, Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'dd'), 14, 30));
   var event = CalendarApp.getDefaultCalendar().createEvent('HABIT: ' + habitTasks[rndIndex]
                   , new Date(dtm.getFullYear(), Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'MM') - 1 , Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'dd'), 14, 30)
                   , new Date(dtm.getFullYear(), Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'MM') - 1, Utilities.formatDate(dtm, CONFIG_TIMEZONE, 'dd'), 15, 00));
-
-  Logger.log('Event: ' + event.getId());
 
 }
 

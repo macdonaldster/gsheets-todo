@@ -166,8 +166,6 @@ function setCalendarAppts() {
 
 /* HIDE a single row if it has a Hide Until column entry with a date after current date */
 function setHideUntilRowVisibility( rowID, hideUntilVal){
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
   
       // check if date is > now
       var dtmHideUntil = new Date(hideUntilVal);
@@ -175,8 +173,6 @@ function setHideUntilRowVisibility( rowID, hideUntilVal){
       
       var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
       var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
-      
-      Logger.log("rowID: " + rowID );
       
       if( dtmNow <= dtmHideUntil ){
         // hide the row
@@ -235,6 +231,9 @@ function onEdit(e){
 function fillInMissingIDs(){
 
     var data = getCalendarData();
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+
     
     // columns
     var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
@@ -245,11 +244,11 @@ function fillInMissingIDs(){
 
       // if date but not google calendar entry, add it
       if (data[i][autoIncColumnId] == '') {
-        sheet.getRange(i + 1, autoIncColumnId+1).setValue(Utilities.getUuid()); 
+        worksheet.getRange(i + 1, autoIncColumnId+1).setValue(Utilities.getUuid()); 
       }
       
       if (data[i][lastModifiedColumnId] == '') {
-        sheet.getRange(i + 1, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
+        worksheet.getRange(i + 1, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
       }
       
       // hide until

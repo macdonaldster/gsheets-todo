@@ -35,6 +35,7 @@ var CONFIG_SHEET_TODO = 'TODO'; // you can set this to some test sheet for debug
 
 // globals
 var columnHeaders = getColumnHeaders();
+var sheet;
 
 
 /* --- UTILITY FUNCTIONS START --- */
@@ -49,7 +50,7 @@ function getColumnHeaders(){
 
 /* get calendar data as set of rows you can iterate over */
 function getCalendarData(){
-  var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+  sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
   var data = sheet.getDataRange().getValues();
   return data;
 }

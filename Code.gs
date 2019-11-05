@@ -34,7 +34,7 @@ var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not chan
 var CONFIG_SHEET_TODO = 'TODO'; // you can set this to some test sheet for debugging the set up and script options, etc.
 
 // globals
-var columnHeaders = getColumnHeaders();
+var columnHeaders;
 var sheet;
 
 
@@ -235,6 +235,7 @@ function onEdit(e){
 /* onEdit(e) isn't firing on IFTTT adds, etc. so you need to scan and periodically fill in missing values */
 function fillInMissingIDs(){
 
+    columnHeaders = getColumnHeaders();
     var data = getCalendarData();
     
     // columns

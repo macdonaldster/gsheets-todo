@@ -42,10 +42,9 @@ var sheet;
 
 /* get column headers in an array */
 function getColumnHeaders(){
-    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);    
-    var columns = worksheet.getDataRange().getNumColumns();
-    return worksheet.getSheetValues(1, 1, 1, columns)[0];    
+    sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+    var columns = sheet.getDataRange().getNumColumns();
+    return sheet.getSheetValues(1, 1, 1, columns)[0];    
 }
 
 /* get calendar data as set of rows you can iterate over */
@@ -167,25 +166,21 @@ function setCalendarAppts() {
 
 /* HIDE a single row if it has a Hide Until column entry with a date after current date */
 function setHideUntilRowVisibility( rowID, hideUntilVal){
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+      sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
   
       // check if date is > now
       var dtmHideUntil = new Date(hideUntilVal);
-      var dtmNow = new Date();
-      
-      var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-      var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+      var dtmNow = new Date();   
       
       Logger.log("rowID: " + rowID );
       
       if( dtmNow <= dtmHideUntil ){
         // hide the row
-        worksheet.hideRows(rowID);        
+        sheet.hideRows(rowID);        
       }
       else{
         // show the row
-        worksheet.showRows(rowID);
+        sheet.showRows(rowID);
       }
   
       
@@ -207,6 +202,7 @@ function onEdit(e){
     var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
     var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
     var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
+    var taskColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_TASK);
 
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
@@ -219,7 +215,14 @@ function onEdit(e){
 
     // last modified
     if( row > 1 && lastModifiedColumnId > -1 ){
-      worksheet.getRange(row, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
+      Logger.log('Task: ' + worksheet.getRange(row, taskColumnId+1).getValue());
+      if( worksheet.getRange(row, taskColumnId+1).getValue() == '' ){
+        
+        worksheet.getRange(row, lastModifiedColumnId+1).setValue(''); 
+      }
+      else{
+        worksheet.getRange(row, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
+      }
     }
     
     // hide until

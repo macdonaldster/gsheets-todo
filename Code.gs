@@ -13,6 +13,8 @@
          
 */
 
+
+
 /// CONFIG 
 
 ///// COLUMNS
@@ -31,6 +33,7 @@ var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not chan
 //var CONFIG_GCAL_OVERDUE_COLOUR = null; // WILL NOT CHANGE COLOUR
 
 // SHEET NAMES
+var CONFIG_SHEETID = '1TuGjGsbbmvqX5OnuP8GFUZxWkDLg5YSvnGem8DRcUME' //copy from the URL of the sheet, required for time triggers - https://docs.google.com/spreadsheets/d/xXxXxXx/edit#gid=0
 var CONFIG_SHEET_TODO = 'TODO'; // you can set this to some test sheet for debugging the set up and script options, etc.
 
 // globals
@@ -42,14 +45,17 @@ var sheet;
 
 /* get column headers in an array */
 function getColumnHeaders(){
-    sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+    //sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+    sheet = SpreadsheetApp.openById(CONFIG_SHEETID).getSheetByName(CONFIG_SHEET_TODO);
+    
     var columns = sheet.getDataRange().getNumColumns();
     return sheet.getSheetValues(1, 1, 1, columns)[0];    
 }
 
 /* get calendar data as set of rows you can iterate over */
 function getCalendarData(){
-  sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+  //sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+  sheet = SpreadsheetApp.openById(CONFIG_SHEETID).getSheetByName(CONFIG_SHEET_TODO);
   var data = sheet.getDataRange().getValues();
   return data;
 }
@@ -69,6 +75,7 @@ function getCalendarData(){
 function setCalendarAppts() {
 
   var data = getCalendarData();
+  var columnHeaders = getColumnHeaders();
 
   // column headers 
   var isCompleteColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_DONE);
@@ -99,7 +106,7 @@ function setCalendarAppts() {
         }
 
         // create event
-        event = CalendarApp.getDefaultCalendar().createAllDayEvent(data[i][taskColumnId] + " #mute", eventDate);
+        event = CalendarApp.getDefaultCalendar().createAllDayEvent("TASK: " + data[i][taskColumnId], eventDate);
         
         // if event is overdue
         if (isOverdue && CONFIG_GCAL_OVERDUE_COLOUR != null) {
@@ -114,7 +121,7 @@ function setCalendarAppts() {
         }
         
         // add the event ID to the spreadsheet
-        SpreadsheetApp.getActiveSheet().getRange(i + 1, googleCalColumnId + 1).setValue(event.getId());
+        SpreadsheetApp.openById(CONFIG_SHEETID).getSheetByName(CONFIG_SHEET_TODO).getRange(i + 1, googleCalColumnId + 1).setValue(event.getId());
 
       }
       else if (data[i][dateColumnId] && data[i][googleCalColumnId]) {
@@ -187,11 +194,12 @@ function setHideUntilRowVisibility( rowID, hideUntilVal){
 }
 
 
+
 /* on Edit:
    - ensure there's an ID on the row if ID column is defined   
    - update last modified date if column is defined
 */
-function onEdit(e){
+function onUserEdit(e){
 
    Logger.log("onEdit");
 
@@ -245,9 +253,20 @@ function fillInMissingIDs(){
     var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
     var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
     var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
+    var taskColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_TASK);
+//    var emptyRowCount = 0;
   
     for (var i = 1; i < data.length; i++) {
 
+//      if( data[i][taskColumnId] == '') {
+//        emptyRowCount++;
+//        if( emptyRowCount > 10 )
+//        {
+//          // delete empty rows
+//          sheet.deleteRow(i+1);
+//        }
+//      }
+  
       // if date but not google calendar entry, add it
       if (data[i][autoIncColumnId] == '') {
         sheet.getRange(i + 1, autoIncColumnId+1).setValue(Utilities.getUuid()); 

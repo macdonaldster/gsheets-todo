@@ -13,6 +13,8 @@
          
 */
 
+
+
 /// CONFIG 
 
 ///// COLUMNS
@@ -31,6 +33,7 @@ var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not chan
 //var CONFIG_GCAL_OVERDUE_COLOUR = null; // WILL NOT CHANGE COLOUR
 
 // SHEET NAMES
+var CONFIG_SHEETID = 'xXxXxXx' //copy from the URL of the sheet, required for time triggers - https://docs.google.com/spreadsheets/d/xXxXxXx/edit#gid=0
 var CONFIG_SHEET_TODO = 'TODO'; // you can set this to some test sheet for debugging the set up and script options, etc.
 
 // globals
@@ -42,15 +45,17 @@ var sheet;
 
 /* get column headers in an array */
 function getColumnHeaders(){
-    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);    
-    var columns = worksheet.getDataRange().getNumColumns();
-    return worksheet.getSheetValues(1, 1, 1, columns)[0];    
+    //sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+    sheet = SpreadsheetApp.openById(CONFIG_SHEETID).getSheetByName(CONFIG_SHEET_TODO);
+    
+    var columns = sheet.getDataRange().getNumColumns();
+    return sheet.getSheetValues(1, 1, 1, columns)[0];    
 }
 
 /* get calendar data as set of rows you can iterate over */
 function getCalendarData(){
-  sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+  //sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
+  sheet = SpreadsheetApp.openById(CONFIG_SHEETID).getSheetByName(CONFIG_SHEET_TODO);
   var data = sheet.getDataRange().getValues();
   return data;
 }
@@ -70,6 +75,7 @@ function getCalendarData(){
 function setCalendarAppts() {
 
   var data = getCalendarData();
+  var columnHeaders = getColumnHeaders();
 
   // column headers 
   var isCompleteColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_DONE);
@@ -100,7 +106,7 @@ function setCalendarAppts() {
         }
 
         // create event
-        event = CalendarApp.getDefaultCalendar().createAllDayEvent(data[i][taskColumnId] + " #mute", eventDate);
+        event = CalendarApp.getDefaultCalendar().createAllDayEvent("TASK: " + data[i][taskColumnId], eventDate);
         
         // if event is overdue
         if (isOverdue && CONFIG_GCAL_OVERDUE_COLOUR != null) {
@@ -115,7 +121,7 @@ function setCalendarAppts() {
         }
         
         // add the event ID to the spreadsheet
-        SpreadsheetApp.getActiveSheet().getRange(i + 1, googleCalColumnId + 1).setValue(event.getId());
+        SpreadsheetApp.openById(CONFIG_SHEETID).getSheetByName(CONFIG_SHEET_TODO).getRange(i + 1, googleCalColumnId + 1).setValue(event.getId());
 
       }
       else if (data[i][dateColumnId] && data[i][googleCalColumnId]) {
@@ -167,36 +173,33 @@ function setCalendarAppts() {
 
 /* HIDE a single row if it has a Hide Until column entry with a date after current date */
 function setHideUntilRowVisibility( rowID, hideUntilVal){
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+      sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_TODO);
   
       // check if date is > now
       var dtmHideUntil = new Date(hideUntilVal);
-      var dtmNow = new Date();
-      
-      var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-      var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
+      var dtmNow = new Date();   
       
       Logger.log("rowID: " + rowID );
       
       if( dtmNow <= dtmHideUntil ){
         // hide the row
-        worksheet.hideRows(rowID);        
+        sheet.hideRows(rowID);        
       }
       else{
         // show the row
-        worksheet.showRows(rowID);
+        sheet.showRows(rowID);
       }
   
       
 }
 
 
+
 /* on Edit:
    - ensure there's an ID on the row if ID column is defined   
    - update last modified date if column is defined
 */
-function onEdit(e){
+function onUserEdit(e){
 
    Logger.log("onEdit");
 
@@ -207,6 +210,7 @@ function onEdit(e){
     var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
     var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
     var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
+    var taskColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_TASK);
 
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     var worksheet   = spreadsheet.getSheetByName(CONFIG_SHEET_TODO);
@@ -219,7 +223,14 @@ function onEdit(e){
 
     // last modified
     if( row > 1 && lastModifiedColumnId > -1 ){
-      worksheet.getRange(row, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
+      Logger.log('Task: ' + worksheet.getRange(row, taskColumnId+1).getValue());
+      if( worksheet.getRange(row, taskColumnId+1).getValue() == '' ){
+        
+        worksheet.getRange(row, lastModifiedColumnId+1).setValue(''); 
+      }
+      else{
+        worksheet.getRange(row, lastModifiedColumnId+1).setValue(Utilities.formatDate(new Date(), CONFIG_TIMEZONE, 'YYYY-MM-dd HH:mm')); 
+      }
     }
     
     // hide until
@@ -242,9 +253,21 @@ function fillInMissingIDs(){
     var autoIncColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_AUTOINCREMENT);
     var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
     var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
+    var taskColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_TASK);
+    var emptyRowCount = 0;
+    var rowsToDelete = [];
   
     for (var i = 1; i < data.length; i++) {
 
+      if( data[i][taskColumnId] == '') {
+        emptyRowCount++;
+        if( emptyRowCount > 3 )
+        {
+          // delete empty rows
+          rowsToDelete.unshift(i+1);
+        }
+      }
+  
       // if date but not google calendar entry, add it
       if (data[i][autoIncColumnId] == '') {
         sheet.getRange(i + 1, autoIncColumnId+1).setValue(Utilities.getUuid()); 
@@ -260,6 +283,12 @@ function fillInMissingIDs(){
       }
 
     }  
+  
+    // delete the empty rows now that we are done, start with highest row number
+    for(var j = 0; j < rowsToDelete.length; j++)
+    {
+       sheet.deleteRow(rowsToDelete[j]);
+    }
 }
 
 

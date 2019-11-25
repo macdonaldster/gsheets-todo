@@ -33,7 +33,7 @@ var CONFIG_GCAL_OVERDUE_COLOUR = CalendarApp.EventColor.PALE_RED; // To not chan
 //var CONFIG_GCAL_OVERDUE_COLOUR = null; // WILL NOT CHANGE COLOUR
 
 // SHEET NAMES
-var CONFIG_SHEETID = '1TuGjGsbbmvqX5OnuP8GFUZxWkDLg5YSvnGem8DRcUME' //copy from the URL of the sheet, required for time triggers - https://docs.google.com/spreadsheets/d/xXxXxXx/edit#gid=0
+var CONFIG_SHEETID = 'xXxXxXx' //copy from the URL of the sheet, required for time triggers - https://docs.google.com/spreadsheets/d/xXxXxXx/edit#gid=0
 var CONFIG_SHEET_TODO = 'TODO'; // you can set this to some test sheet for debugging the set up and script options, etc.
 
 // globals

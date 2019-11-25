@@ -254,18 +254,19 @@ function fillInMissingIDs(){
     var lastModifiedColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_LASTMODIFIED);
     var hideUntilColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_HIDEROWUNTILDATE);
     var taskColumnId = columnHeaders.indexOf(CONFIG_COLUMNS_TASK);
-//    var emptyRowCount = 0;
+    var emptyRowCount = 0;
+    var rowsToDelete = [];
   
     for (var i = 1; i < data.length; i++) {
 
-//      if( data[i][taskColumnId] == '') {
-//        emptyRowCount++;
-//        if( emptyRowCount > 10 )
-//        {
-//          // delete empty rows
-//          sheet.deleteRow(i+1);
-//        }
-//      }
+      if( data[i][taskColumnId] == '') {
+        emptyRowCount++;
+        if( emptyRowCount > 3 )
+        {
+          // delete empty rows
+          rowsToDelete.unshift(i+1);
+        }
+      }
   
       // if date but not google calendar entry, add it
       if (data[i][autoIncColumnId] == '') {
@@ -282,6 +283,12 @@ function fillInMissingIDs(){
       }
 
     }  
+  
+    // delete the empty rows now that we are done, start with highest row number
+    for(var j = 0; j < rowsToDelete.length; j++)
+    {
+       sheet.deleteRow(rowsToDelete[j]);
+    }
 }
 
 
